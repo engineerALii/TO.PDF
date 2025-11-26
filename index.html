@@ -168,8 +168,13 @@
             padding: 18px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
             z-index: 100; transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
             display: flex; align-items: center; justify-content: space-between; gap: 16px;
+            /* إضافة cursor ليشير للسحب */
+            cursor: grab;
+            touch-action: none; /* منع التمرير الافتراضي للصفحة عند لمس الإشعار */
         }
         #banner.show { transform: translateX(-50%) translateY(0); }
+        #banner:active { cursor: grabbing; }
+        
         .notification-header {
             display: flex; align-items: center; gap: 8px; font-size: 0.8rem;
             color: rgba(255, 255, 255, 0.6); margin-bottom: 4px;
@@ -260,7 +265,10 @@
 
     <!-- ملصق إعلاني (إشعار آيفون) -->
     <div id="banner">
-        <div class="flex items-center gap-4 flex-1 overflow-hidden">
+        <!-- مؤشر السحب الصغير -->
+        <div class="absolute bottom-2 left-1/2 transform -translate-x-1/2 w-12 h-1 bg-white/20 rounded-full"></div>
+        
+        <div class="flex items-center gap-4 flex-1 overflow-hidden pb-2">
             <div class="w-14 h-14 flex-shrink-0 rounded-2xl bg-white/10 overflow-hidden shadow-sm border border-white/10">
                 <img src="https://www.dropbox.com/scl/fi/pw360ns6lmih3gjvyynf1/4413204.png?rlkey=jw9xdcefhg4vcmm24lbxnvub2&st=wz6b0zuj&raw=1" alt="Icon" class="w-full h-full object-cover">
             </div>
@@ -272,7 +280,7 @@
                 <p class="text-sm text-white/80 truncate">انضموا بالقناة للمزيد من الخدمات المميزة!</p>
             </div>
         </div>
-        <a href="https://t.me/najaaf1" target="_blank" rel="noopener noreferrer" class="flex-shrink-0 bg-white/10 hover:bg-white/20 active:bg-white/30 text-white rounded-full p-3 transition-colors border border-white/5 shadow-lg group">
+        <a href="https://t.me/najaaf1" target="_blank" rel="noopener noreferrer" class="flex-shrink-0 bg-white/10 hover:bg-white/20 active:bg-white/30 text-white rounded-full p-3 transition-colors border border-white/5 shadow-lg group mb-2">
             <div class="bg-[#2AABEE] rounded-full p-2 shadow-sm group-hover:scale-110 transition-transform">
                  <img src="https://www.dropbox.com/scl/fi/1xvlsfrfk88twdb4sc6d5/telegram-icone-icon.png?rlkey=aarpjchjfvqhh53rxoyurrsrc&st=hq3k3ibm&raw=1" class="w-6 h-6" alt="Join">
             </div>
@@ -482,6 +490,14 @@
                 <p class="text-white/50 text-sm">اكتب ملاحظاتك أو تقاريرك واحفظها فوراً</p>
             </header>
 
+            <!-- Warning for Mobile -->
+            <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3 mb-4 flex items-start gap-3">
+                <i data-lucide="alert-triangle" class="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5"></i>
+                <p class="text-xs text-yellow-200/80 leading-relaxed">
+                    ملاحظة: هذه الأداة تعمل بأفضل كفاءة على أجهزة الكمبيوتر. قد تختلف تنسيقات النصوص العربية قليلاً عند الاستخدام من الهاتف.
+                </p>
+            </div>
+
             <!-- Editor -->
             <div class="flex flex-col gap-4">
                 <textarea id="pdf-text-content" rows="10" placeholder="اكتب النص هنا..." class="glass-input w-full p-4 rounded-xl text-right dir-rtl resize-none focus:border-amber-500/50 leading-relaxed"></textarea>
@@ -490,17 +506,17 @@
 
                 <button onclick="convertTextToPDF()" class="apple-btn w-full py-4 rounded-xl flex items-center justify-center gap-2 font-bold text-white bg-amber-500/20 border-amber-500/30 hover:border-amber-500/50 mt-2">
                     <i data-lucide="download" class="w-5 h-5"></i>
-                    <span>حفظ كملف PDF</span>
+                    <span>حفظ كملف PDF تلقائياً</span>
                 </button>
             </div>
             
-            <!-- Hidden container for rendering -->
-            <div id="render-container" style="position:fixed; top:-9999px; left:-9999px; width: 210mm; min-height: 297mm; background: white; color: black; padding: 20mm; direction: rtl; font-family: 'Tajawal', sans-serif;">
+            <!-- Hidden container for rendering (improved positioning) -->
+            <div id="render-container" style="position:absolute; left:0; top:0; width: 794px; /* A4 width px */ min-height: 1123px; /* A4 height px */ z-index: -1000; background: white; color: black; padding: 40px; direction: rtl; font-family: 'Tajawal', sans-serif; font-size: 22px; white-space: pre-wrap; line-height: 1.8; text-align: right; visibility: hidden;">
                 <!-- Content goes here -->
             </div>
         </div>
     </div>
-
+    
     <!-- بقية النوافذ والسكربتات -->
     <div id="toast" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 glass-panel px-6 py-4 flex items-center gap-3 translate-y-20 opacity-0 transition-all duration-500 z-50">
         <div id="toast-icon" class="w-2 h-2 rounded-full bg-green-500"></div>
@@ -539,7 +555,7 @@
             lucide.createIcons();
         }
 
-        // --- Text to PDF Logic ---
+        // --- Text to PDF Logic (Optimized Image-Based) ---
         async function convertTextToPDF() {
             const text = document.getElementById('pdf-text-content').value;
             const filename = document.getElementById('text-pdf-filename').value || 'document';
@@ -549,36 +565,59 @@
                 return;
             }
 
-            // Setup render container
+            // Setup render container - Visible but behind scene
             const container = document.getElementById('render-container');
-            // Convert newlines to <br> and preserve whitespace
-            container.innerHTML = `<div style="white-space: pre-wrap; font-size: 14pt; line-height: 1.6; text-align: right;">${text}</div>`;
+            container.innerText = text; 
+            container.style.visibility = 'visible'; 
+            
+            // Ensure container is top-left to avoid scrolling issues during capture
+            container.style.top = "0px";
+            container.style.left = "0px";
 
             try {
                 showToast('جاري إنشاء الملف...', 'success'); 
                 
+                // html2canvas capture
                 const canvas = await html2canvas(container, {
-                    scale: 2, // Better quality
+                    scale: 2, // Standard high quality
                     useCORS: true,
-                    windowWidth: 210 * 3.7795275591 // mm to px approximation
+                    windowWidth: 1200, // Desktop view simulation
+                    x: 0,
+                    y: 0,
+                    scrollX: 0,
+                    scrollY: 0,
+                    width: 794, // Forced width
+                    height: container.scrollHeight // Capture full height
                 });
-
-                const imgData = canvas.toDataURL('image/jpeg', 0.95);
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF('p', 'mm', 'a4');
                 
-                const imgProps = doc.getImageProperties(imgData);
-                const pdfWidth = doc.internal.pageSize.getWidth();
+                // Hide again
+                container.style.visibility = 'hidden';
+                container.style.top = "-9999px"; // Move away
+
+                const imgData = canvas.toDataURL('image/jpeg', 0.90);
+                const { jsPDF } = window.jspdf;
+                // Calculate height in mm based on aspect ratio
+                // A4 width is 210mm
+                const imgProps = { width: canvas.width, height: canvas.height };
+                const pdfWidth = 210;
                 const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
                 
-                // If content is longer than one page, logic could be added here, but for simple notes:
+                // If height > 297mm (A4 height), we need multiple pages or a long PDF
+                // For simplicity, let's create a custom size PDF if it's long, or scale it to fit if requested.
+                // Here we create a PDF with the exact height of the content (like a long image) or split pages.
+                // For now, let's use a page height that fits the content to avoid cutting.
+                
+                const doc = new jsPDF('p', 'mm', [pdfWidth, Math.max(pdfHeight, 297)]);
+                
                 doc.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
                 doc.save(`${filename}.pdf`);
                 
                 playSuccess();
-                showToast('تم حفظ الملف بنجاح', 'success');
+                showToast('تم حفظ الملف تلقائياً', 'success');
             } catch (err) {
                 console.error(err);
+                container.style.visibility = 'hidden';
+                container.style.top = "-9999px";
                 showToast('حدث خطأ أثناء التحويل', 'error');
             }
         }
@@ -596,7 +635,6 @@
                 document.getElementById('opt-3').value.trim()
             ];
             
-            // Get checked radio
             const correctIndex = document.querySelector('input[name="correct-opt"]:checked').value;
 
             if (!qText || opts.some(o => !o)) {
@@ -611,7 +649,6 @@
                 correct: parseInt(correctIndex)
             });
 
-            // Clear inputs
             document.getElementById('q-text').value = '';
             document.getElementById('opt-0').value = '';
             document.getElementById('opt-1').value = '';
@@ -669,7 +706,7 @@
         function renderQuizQuestions() {
             const container = document.getElementById('quiz-questions-container');
             container.innerHTML = '';
-            userAnswers = {}; // Reset answers
+            userAnswers = {}; 
 
             quizData.forEach((q, qIdx) => {
                 const qCard = document.createElement('div');
@@ -705,24 +742,19 @@
 
         window.saveAnswer = function(qIdx, oIdx) {
             userAnswers[qIdx] = oIdx;
-            // Visual feedback for selection handled by CSS
         }
 
         function submitQuizAnswers() {
-            // Check if all answered? (Optional, currently allowing skip)
-            
             let score = 0;
             quizData.forEach((q, i) => {
                 if (userAnswers[i] === q.correct) score++;
             });
 
-            // Show Results
             document.getElementById('quiz-play-area').classList.add('hidden');
             document.getElementById('quiz-play-area').classList.remove('flex');
             document.getElementById('quiz-results').classList.remove('hidden');
             document.getElementById('quiz-results').classList.add('flex');
             
-            // Animate Score
             const percentage = Math.round((score / quizData.length) * 100);
             document.getElementById('score-text').innerText = percentage;
             document.getElementById('score-circle').setAttribute('stroke-dasharray', `${percentage}, 100`);
@@ -743,10 +775,8 @@
             document.getElementById('quiz-play-area').classList.remove('hidden');
             document.getElementById('quiz-play-area').classList.add('flex');
             
-            // Hide submit button
             document.querySelector('#quiz-play-area button').classList.add('hidden');
             
-            // Add "Back to Editor" button if not present
             if(!document.getElementById('back-to-edit-btn')) {
                 const btn = document.createElement('button');
                 btn.id = 'back-to-edit-btn';
@@ -758,40 +788,34 @@
                 document.getElementById('back-to-edit-btn').classList.remove('hidden');
             }
 
-            // Mark answers
             quizData.forEach((q, qIdx) => {
                 const card = document.getElementById(`q-card-${qIdx}`);
                 const inputs = card.querySelectorAll('input');
                 const userAns = userAnswers[qIdx];
                 
                 inputs.forEach((input, oIdx) => {
-                    input.disabled = true; // Disable interaction
+                    input.disabled = true;
                     const container = input.nextElementSibling;
                     
                     if (oIdx === q.correct) {
-                        container.classList.add('correct-answer'); // Always show correct
-                        // Add icon
+                        container.classList.add('correct-answer');
                     } else if (oIdx === userAns && oIdx !== q.correct) {
-                        container.classList.add('wrong-answer'); // Mark wrong choice
+                        container.classList.add('wrong-answer');
                     }
                 });
             });
         }
 
         function resetQuizToEditor() {
-            // Reset View
             document.getElementById('quiz-results').classList.add('hidden');
             document.getElementById('quiz-results').classList.remove('flex');
             document.getElementById('quiz-play-area').classList.add('hidden');
             document.getElementById('quiz-play-area').classList.remove('flex');
             document.getElementById('quiz-editor').classList.remove('hidden');
             
-            // Reset Text
             document.getElementById('quiz-header-title').innerText = 'منشئ الاختبارات';
             document.getElementById('quiz-header-desc').innerText = 'أضف أسئلتك ثم اختبر معلوماتك';
             
-            // Reset Quiz Data? No, keep questions so user can edit/add more.
-            // But we enable the "Start" button again
             const submitBtn = document.querySelector('#quiz-play-area button'); 
             if(submitBtn) submitBtn.classList.remove('hidden');
             
@@ -799,7 +823,7 @@
             if(backBtn) backBtn.classList.add('hidden');
         }
 
-        // --- منطق QR Code (نفس السابق) ---
+        // --- منطق QR Code ---
         let html5QrcodeScanner = null;
         function toggleQRScanner() {
             const modal = document.getElementById('qr-modal');
@@ -871,20 +895,67 @@
             });
         }
 
-        // --- Banner Logic ---
+        // --- Banner Logic (Swipeable) ---
         let bannerTimeout;
         const banner = document.getElementById('banner');
+        
+        // Show banner logic
         function showNotificationBanner() {
             banner.classList.add('show');
+            banner.style.transform = ''; // Reset any manual transform
+            
             clearTimeout(bannerTimeout);
-            bannerTimeout = setTimeout(() => { banner.classList.remove('show'); }, 8000);
+            bannerTimeout = setTimeout(() => { 
+                banner.classList.remove('show'); 
+            }, 8000);
         }
+
+        // Auto cycle logic
         document.addEventListener('DOMContentLoaded', () => {
             const startBannerCycle = () => {
                 showNotificationBanner();
                 setTimeout(startBannerCycle, 50000);
             };
             setTimeout(startBannerCycle, 1000);
+        });
+
+        // Swipe Dismiss Logic
+        let bannerStartY = 0;
+        
+        banner.addEventListener('touchstart', (e) => {
+            bannerStartY = e.touches[0].clientY;
+            // Clear timeout to prevent auto-hide while interacting
+            clearTimeout(bannerTimeout);
+        }, {passive: true});
+
+        banner.addEventListener('touchmove', (e) => {
+            const currentY = e.touches[0].clientY;
+            const diff = currentY - bannerStartY;
+            
+            // Only allow swiping up (negative diff)
+            if (diff < 0) {
+                // Move the banner with the finger
+                banner.style.transform = `translateX(-50%) translateY(${diff}px)`;
+            }
+        }, {passive: true});
+
+        banner.addEventListener('touchend', (e) => {
+            const currentY = e.changedTouches[0].clientY;
+            const diff = currentY - bannerStartY;
+            
+            // Threshold for dismissal (e.g., 50px)
+            if (diff < -50) {
+                // Animate out completely
+                banner.classList.remove('show');
+                banner.style.transform = ''; // Clean up
+            } else {
+                // Reset position if not swiped enough
+                banner.style.transform = '';
+                // Restart auto-hide timer
+                bannerTimeout = setTimeout(() => { 
+                    banner.classList.remove('show'); 
+                }, 3000);
+            }
         });
 
         // --- PDF Logic (Image Converter) ---
