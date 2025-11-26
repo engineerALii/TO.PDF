@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>محول الصور إلى PDF - الخدمات الطلابية</title>
+    <title>منصة الخدمات الطلابية</title>
     
     <!-- مكتبة Tailwind CSS للتصميم -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -11,15 +11,17 @@
     <!-- مكتبة jsPDF لتحويل الصور -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
+    <!-- مكتبة html2canvas لدعم النصوص العربية في PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
     <!-- مكتبة قراءة QR Code -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     
     <!-- أيقونات Lucide -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
-    <!-- خط تجريبي يشبه خطوط آبل العربية -->
+    <!-- خطوط -->
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@200;300;400;500;700;800&display=swap" rel="stylesheet">
-    <!-- خط جميل للمعرف -->
     <link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
@@ -28,7 +30,7 @@
             font-family: 'Tajawal', -apple-system, BlinkMacSystemFont, sans-serif;
             background-color: #000;
             overflow-x: hidden;
-            -webkit-tap-highlight-color: transparent; /* إزالة تظليل النقر في الجوال */
+            -webkit-tap-highlight-color: transparent;
         }
 
         .font-brand {
@@ -38,10 +40,7 @@
         /* خلفية ضبابية متحركة (Aurora Background) */
         .aurora-bg {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
+            top: 0; left: 0; width: 100vw; height: 100vh;
             background: radial-gradient(circle at 50% 50%, #1a1a1a 0%, #000000 100%);
             z-index: -2;
         }
@@ -73,6 +72,24 @@
             border-radius: 24px;
         }
 
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-5px);
+            border-color: rgba(255, 255, 255, 0.25);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+        }
+
         .glass-input {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -86,8 +103,9 @@
             outline: none;
         }
         
-        .glass-input::placeholder {
-            color: rgba(255, 255, 255, 0.3);
+        select.glass-input option {
+            background-color: #1a1a1a;
+            color: white;
         }
 
         /* تخصيص شريط التمرير */
@@ -101,23 +119,17 @@
             border: 1px solid rgba(255,255,255,0.1);
             position: relative;
             overflow: hidden;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); /* تسريع الحركة قليلاً لتناسب الصوت */
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
         }
 
-        .apple-btn:active {
-            transform: scale(0.98); /* تأثير ضغط واقعي */
-        }
+        .apple-btn:active { transform: scale(0.98); }
 
         .apple-btn::before {
-            content: '';
-            position: absolute;
-            top: 0; left: -100%;
-            width: 100%; height: 100%;
+            content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
             background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
             transition: 0.5s;
         }
-
         .apple-btn:hover::before { left: 100%; }
         .apple-btn:hover {
             transform: translateY(-2px);
@@ -125,152 +137,83 @@
             border-color: rgba(255,255,255,0.3);
         }
 
-        .primary-glow {
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
-        }
-        
-        .success-glow {
-            box-shadow: 0 0 20px rgba(34, 197, 94, 0.15);
-            border-color: rgba(34, 197, 94, 0.3);
-        }
+        .primary-glow { box-shadow: 0 0 20px rgba(59, 130, 246, 0.15); }
+        .success-glow { box-shadow: 0 0 20px rgba(34, 197, 94, 0.15); border-color: rgba(34, 197, 94, 0.3); }
 
         /* حالة التحميل */
         .loader {
-            border: 3px solid rgba(255,255,255,0.1);
-            border-radius: 50%;
-            border-top: 3px solid #fff;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
+            border: 3px solid rgba(255,255,255,0.1); border-radius: 50%; border-top: 3px solid #fff;
+            width: 20px; height: 20px; animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* --- تصميم إشعار الآيفون الجديد (نسخة مكبرة) --- */
-        #banner {
-            position: fixed;
-            top: 20px; /* مسافة من الأعلى */
-            left: 50%;
-            /* يبدأ مخفياً للأعلى */
-            transform: translateX(-50%) translateY(-200%); 
-            width: 95%;
-            max-width: 500px; /* زيادة العرض الأقصى ليكون أكبر */
-            background: rgba(35, 35, 35, 0.90); /* لون داكن أكثر قليلاً */
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 22px; /* زوايا دائرية أكبر */
-            padding: 18px; /* زيادة الحشوة الداخلية */
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6); /* ظل أعمق */
-            z-index: 100; /* أعلى من كل شيء */
-            /* حركة مرنة تشبه النابض */
-            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); 
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 16px;
-        }
-        
-        #banner.show {
-            transform: translateX(-50%) translateY(0); /* ظهور في المكان */
-        }
-
-        /* تحسينات داخلية للإشعار */
-        .notification-header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.8rem;
-            color: rgba(255, 255, 255, 0.6);
-            margin-bottom: 4px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        /* أنماط السحب والإفلات */
-        .draggable-item {
-            cursor: grab;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .draggable-item.dragging {
-            opacity: 0.5;
-            cursor: grabbing;
-            transform: scale(0.95);
-        }
-        .drag-over {
-            border: 2px dashed #3b82f6;
-        }
-
-        /* FAB Button for QR - Reverted to Round Shape */
-        .qr-fab {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            width: 60px;  /* دائري */
-            height: 60px; 
-            border-radius: 50%; /* حواف دائرية كاملة */
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 90;
-            color: white;
-        }
-        .qr-fab:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: scale(1.1);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
-        }
-        .qr-fab:active {
-            transform: scale(0.95);
-        }
-
-        /* QR Modal */
-        #qr-modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(15px);
-            z-index: 200;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        /* --- View Management --- */
+        .view-section {
+            display: none;
             opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.4s ease-in-out;
         }
-        #qr-modal.active {
+        .view-section.active {
+            display: flex;
             opacity: 1;
-            pointer-events: auto;
-        }
-        #qr-reader {
-            width: 100%;
-            height: 100%;
-            border-radius: 16px;
-            overflow: hidden;
-        }
-        
-        /* Customizing html5-qrcode scanner to force square and cover */
-        #qr-reader video {
-            object-fit: cover; /* يجعل الفيديو يملأ المربع بالكامل */
-            width: 100% !important;
-            height: 100% !important;
-            border-radius: 16px;
-        }
-        #qr-reader__scan_region {
-            background: transparent !important;
-        }
-        #qr-reader__dashboard_section_csr span, 
-        #qr-reader__dashboard_section_swaplink {
-            color: white !important;
-            text-decoration: none !important;
         }
 
-        /* إخفاء واجهة رفع الملفات الافتراضية */
+        /* --- تصميم إشعار الآيفون --- */
+        #banner {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-200%);
+            width: 95%; max-width: 500px;
+            background: rgba(35, 35, 35, 0.90); backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 22px;
+            padding: 18px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+            z-index: 100; transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex; align-items: center; justify-content: space-between; gap: 16px;
+        }
+        #banner.show { transform: translateX(-50%) translateY(0); }
+        .notification-header {
+            display: flex; align-items: center; gap: 8px; font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6); margin-bottom: 4px;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+
+        /* FAB & Modal Styles (QR) */
+        .qr-fab {
+            position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px;
+            border-radius: 50%; background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 90; color: white;
+        }
+        .qr-fab:hover { background: rgba(255, 255, 255, 0.2); transform: scale(1.1); }
+        
+        #qr-modal {
+            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(15px); z-index: 200;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        #qr-modal.active { opacity: 1; pointer-events: auto; }
+        #qr-reader { width: 100%; height: 100%; border-radius: 16px; overflow: hidden; }
+        #qr-reader video { object-fit: cover; width: 100% !important; height: 100% !important; border-radius: 16px; }
+        
+        /* Quiz Styling */
+        .option-radio:checked + div {
+            border-color: #34d399;
+            background-color: rgba(16, 185, 129, 0.1);
+        }
+        .correct-answer {
+            border-color: #34d399 !important;
+            background-color: rgba(16, 185, 129, 0.2) !important;
+        }
+        .wrong-answer {
+            border-color: #f87171 !important;
+            background-color: rgba(248, 113, 113, 0.2) !important;
+        }
+
+        /* Utilities */
+        .draggable-item { cursor: grab; transition: transform 0.2s; }
+        .draggable-item.dragging { opacity: 0.5; cursor: grabbing; transform: scale(0.95); }
         input[type="file"] { display: none; }
     </style>
 </head>
@@ -283,7 +226,7 @@
         <div class="orb orb-3"></div>
     </div>
 
-    <!-- زر QR العائم (تم إرجاعه دائري) -->
+    <!-- زر QR العائم -->
     <div class="qr-fab group" onclick="toggleQRScanner()" title="مسح رمز QR">
         <i data-lucide="qr-code" class="w-7 h-7 text-white group-hover:scale-110 transition-transform"></i>
     </div>
@@ -291,22 +234,16 @@
     <!-- نافذة ماسح QR -->
     <div id="qr-modal">
         <div class="glass-panel p-6 w-full max-w-md relative mx-4 flex flex-col items-center">
-            <!-- زر الإغلاق -->
             <button onclick="toggleQRScanner()" class="absolute top-4 left-4 text-white/50 hover:text-white transition-colors z-10">
                 <i data-lucide="x" class="w-6 h-6"></i>
             </button>
-            
             <h3 class="text-xl font-bold text-white mb-4 mt-2">ماسح الكود الذكي</h3>
-            
-            <!-- حاوية الكاميرا مربعة الشكل -->
             <div class="w-full aspect-square bg-black/30 rounded-2xl overflow-hidden border border-white/10 mb-4 relative flex items-center justify-center">
                 <div id="qr-reader" class="w-full h-full"></div>
-                <!-- خط مسح متحرك -->
                 <div id="scan-line" class="absolute w-full h-0.5 bg-blue-500 top-0 left-0 shadow-[0_0_10px_#3b82f6] animate-[scan_2s_infinite_linear] hidden"></div>
             </div>
-
             <div id="qr-result-container" class="w-full hidden text-center">
-                <p class="text-xs text-white/50 mb-2">تم اكتشاف الرابط:</p>
+                <p class="text-xs text-white/50 mb-2">تم الاكتشاف:</p>
                 <div class="bg-white/10 p-3 rounded-xl break-all text-sm text-blue-300 mb-4 border border-white/5 select-all">
                     <span id="qr-result-text"></span>
                 </div>
@@ -317,35 +254,26 @@
                     </button>
                 </div>
             </div>
-            
             <p id="qr-status" class="text-xs text-white/40 mt-2">وجه الكاميرا نحو الرمز</p>
         </div>
     </div>
 
-    <!-- ملصق إعلاني (إشعار آيفون مكبر) -->
+    <!-- ملصق إعلاني (إشعار آيفون) -->
     <div id="banner">
-        <!-- الجزء الأيمن: الأيقونة والنص -->
         <div class="flex items-center gap-4 flex-1 overflow-hidden">
-            <!-- تكبير أيقونة القناة -->
             <div class="w-14 h-14 flex-shrink-0 rounded-2xl bg-white/10 overflow-hidden shadow-sm border border-white/10">
-                <!-- تم تصحيح الرابط باستخدام raw=1 لضمان العرض -->
                 <img src="https://www.dropbox.com/scl/fi/pw360ns6lmih3gjvyynf1/4413204.png?rlkey=jw9xdcefhg4vcmm24lbxnvub2&st=wz6b0zuj&raw=1" alt="Icon" class="w-full h-full object-cover">
             </div>
             <div class="flex flex-col">
                 <div class="notification-header">
-                    <span class="font-bold">TELEGRAM</span>
-                    <span>•</span>
-                    <span>الآن</span>
+                    <span class="font-bold">TELEGRAM</span> <span>•</span> <span>الآن</span>
                 </div>
                 <h3 class="text-lg font-semibold text-white leading-tight">الخدمات الطلابية</h3>
                 <p class="text-sm text-white/80 truncate">انضموا بالقناة للمزيد من الخدمات المميزة!</p>
             </div>
         </div>
-        
-        <!-- زر التليجرام الجانبي (مكبر) -->
         <a href="https://t.me/najaaf1" target="_blank" rel="noopener noreferrer" class="flex-shrink-0 bg-white/10 hover:bg-white/20 active:bg-white/30 text-white rounded-full p-3 transition-colors border border-white/5 shadow-lg group">
             <div class="bg-[#2AABEE] rounded-full p-2 shadow-sm group-hover:scale-110 transition-transform">
-                 <!-- تم تصحيح الرابط باستخدام raw=1 لضمان العرض -->
                  <img src="https://www.dropbox.com/scl/fi/1xvlsfrfk88twdb4sc6d5/telegram-icone-icon.png?rlkey=aarpjchjfvqhh53rxoyurrsrc&st=hq3k3ibm&raw=1" class="w-6 h-6" alt="Join">
             </div>
         </a>
@@ -354,24 +282,70 @@
     <!-- شريط التنقل العلوي -->
     <nav class="fixed top-0 left-0 w-full p-6 z-50 flex justify-between items-center bg-transparent backdrop-blur-sm pointer-events-none">
         <div class="flex items-center gap-3 pointer-events-auto">
-            <!-- أيقونة الانستغرام والمعرف -->
             <a href="https://instagram.com/c4man" target="_blank" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer group">
                 <i data-lucide="instagram" class="w-5 h-5 text-white/90 group-hover:text-pink-400 transition-colors"></i>
                 <span class="font-brand font-bold text-xl tracking-wide text-white/90">@c4man</span>
             </a>
         </div>
+        <button id="back-home-btn" onclick="showView('view-home')" class="hidden pointer-events-auto apple-btn px-4 py-1.5 rounded-full text-sm text-white items-center gap-2 bg-white/10 border border-white/10 hover:bg-white/20">
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            <span>الرئيسية</span>
+        </button>
         <div class="text-xs font-light text-white/40 tracking-widest hidden md:block">DESIGNED FOR 2026</div>
     </nav>
 
-    <!-- الحاوية الرئيسية -->
-    <main class="w-full max-w-2xl z-10 mt-20 relative">
+    <!-- ================= الواجهة الرئيسية (شبكة الأدوات) ================= -->
+    <div id="view-home" class="view-section active w-full max-w-4xl z-10 mt-20 flex-col items-center">
         
-        <!-- بطاقة التحويل الرئيسية -->
-        <div class="glass-panel p-8 md:p-12 relative overflow-hidden group">
-            
-            <!-- تأثير لمعان عند المرور -->
-            <div class="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
+        <header class="text-center mb-12 animate-fade-in">
+            <h1 class="text-4xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-white to-white/60 mb-4 tracking-tight">
+                الخدمات الطلابية
+            </h1>
+            <p class="text-white/50 font-light text-lg max-w-2xl mx-auto">
+                مجموعة أدوات ذكية مصممة لمساعدة طلبة جامعة الامام جعفر الصادق وغيرهم. اختر الأداة لتبدأ.
+            </p>
+        </header>
 
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full px-4">
+            
+            <!-- بطاقة أداة 1 -->
+            <div onclick="showView('tool-pdf')" class="glass-card p-8 flex flex-col items-center text-center group h-64 justify-center">
+                <div class="w-20 h-20 rounded-2xl bg-gradient-to-tr from-blue-500/20 to-purple-500/20 flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(59,130,246,0.15)] group-hover:scale-110 transition-transform duration-300">
+                    <i data-lucide="images" class="w-10 h-10 text-white/90"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-white mb-2 group-hover:text-blue-300 transition-colors">تحويل الصور إلى PDF</h3>
+                <p class="text-sm text-white/50 leading-relaxed">دمج صور المحاضرات والملخصات في ملف واحد جاهز للطباعة</p>
+            </div>
+
+            <!-- بطاقة أداة 2 -->
+            <div onclick="showView('tool-quiz')" class="glass-card p-8 flex flex-col items-center text-center group h-64 justify-center relative overflow-hidden">
+                <div class="w-20 h-20 rounded-2xl bg-gradient-to-tr from-emerald-500/20 to-teal-500/20 flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(16,185,129,0.15)] group-hover:scale-110 transition-transform duration-300">
+                    <i data-lucide="brain-circuit" class="w-10 h-10 text-white/90"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-white mb-2 group-hover:text-emerald-300 transition-colors">منشئ الاختبارات</h3>
+                <p class="text-sm text-white/50 leading-relaxed">أنشئ أسئلة، حدد الإجابات، واختبر نفسك بنفسك.</p>
+            </div>
+
+            <!-- بطاقة أداة 3: نص إلى PDF (جديد) -->
+            <div onclick="showView('tool-text-pdf')" class="glass-card p-8 flex flex-col items-center text-center group h-64 justify-center relative overflow-hidden">
+                <div class="w-20 h-20 rounded-2xl bg-gradient-to-tr from-amber-500/20 to-orange-500/20 flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(245,158,11,0.15)] group-hover:scale-110 transition-transform duration-300">
+                    <i data-lucide="file-text" class="w-10 h-10 text-white/90"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-white mb-2 group-hover:text-amber-300 transition-colors">تحويل النص إلى PDF</h3>
+                <p class="text-sm text-white/50 leading-relaxed">كتابة تقارير أو ملاحظات سريعة وحفظها كملف PDF.</p>
+            </div>
+
+        </div>
+
+        <div class="mt-12 text-white/20 text-xs font-light">
+            More tools coming soon • Student Services 2026
+        </div>
+    </div>
+
+    <!-- ================= واجهة أداة 1: PDF Converter ================= -->
+    <div id="tool-pdf" class="view-section w-full max-w-2xl z-10 mt-20 flex-col">
+        <div class="glass-panel p-8 md:p-12 relative overflow-hidden group">
+            <div class="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
             <header class="text-center mb-10">
                 <h1 class="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-white to-white/60 mb-3 tracking-tight">
                     حول صورك الى ملف pdf
@@ -380,12 +354,8 @@
                     تقنية ذكية من عمل احد طلبة جامعة الامام جعفر الصادق - النجف
                 </p>
             </header>
-
-            <!-- منطقة رفع الملفات -->
-            <div id="drop-zone" class="glass-input border-dashed border-2 rounded-2xl p-8 text-center cursor-pointer relative transition-all duration-300 mb-6"
-                 onclick="document.getElementById('file-input').click()">
+            <div id="drop-zone" class="glass-input border-dashed border-2 rounded-2xl p-8 text-center cursor-pointer relative transition-all duration-300 mb-6" onclick="document.getElementById('file-input').click()">
                 <input type="file" id="file-input" multiple accept="image/*" onchange="handleFiles(this.files)">
-                
                 <div class="flex flex-col items-center gap-4 pointer-events-none">
                     <div class="w-14 h-14 rounded-full bg-gradient-to-tr from-blue-500/20 to-purple-500/20 flex items-center justify-center shadow-[0_0_30px_rgba(59,130,246,0.2)]">
                         <i data-lucide="image-plus" class="w-7 h-7 text-white/80"></i>
@@ -396,51 +366,33 @@
                     </div>
                 </div>
             </div>
-
-            <!-- منطقة المعاينة (تظهر عند اختيار صور) -->
             <div id="preview-container" class="hidden mb-6">
                 <div class="flex justify-between items-center mb-3 px-2">
                     <span class="text-sm text-white/60">الصور المختارة (<span id="count">0</span>)</span>
                     <button onclick="clearFiles()" class="text-xs text-red-400 hover:text-red-300 transition-colors">مسح الكل</button>
                 </div>
-                <!-- تم تغيير العرض إلى grid لترتيب أفضل -->
-                <div id="gallery" class="grid grid-cols-3 sm:grid-cols-4 gap-3 pb-4">
-                    <!-- سيتم إضافة الصور هنا بالجافاسكريبت -->
-                </div>
+                <div id="gallery" class="grid grid-cols-3 sm:grid-cols-4 gap-3 pb-4"></div>
                 <p class="text-center text-xs text-white/30 mt-2">اسحب الصور لتغيير ترتيبها</p>
             </div>
-
-            <!-- حقل تسمية الملف (جديد) -->
             <div id="naming-section" class="mb-6 hidden">
                 <label class="block text-xs text-white/60 mb-2 pr-1">اسم الملف (اختياري)</label>
                 <div class="relative">
-                    <input type="text" id="filename-input" placeholder="مثلاً: محاضرة الفيزياء 1" 
-                           class="glass-input w-full py-3 px-4 rounded-xl text-right dir-rtl focus:border-white/40">
+                    <input type="text" id="filename-input" placeholder="مثلاً: محاضرة الفيزياء 1" class="glass-input w-full py-3 px-4 rounded-xl text-right dir-rtl focus:border-white/40">
                     <div class="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 text-xs font-mono">.pdf</div>
                 </div>
             </div>
-
-            <!-- أزرار التحكم -->
             <div class="flex flex-col gap-4">
-                <!-- زر التحويل -->
                 <button onclick="processFiles()" id="convert-btn" class="apple-btn w-full py-4 rounded-xl flex items-center justify-center gap-2 font-medium text-white shadow-lg primary-glow group disabled:opacity-50 disabled:cursor-not-allowed">
                     <i data-lucide="file-cog" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
                     <span>تحويل الصور الى pdf</span>
                 </button>
-
-                <!-- قسم التنزيل والإرسال (يظهر بعد التحويل) -->
                 <div id="result-actions" class="hidden flex-col md:flex-row gap-3 animate-fade-in">
-                    <!-- زر التحميل -->
                     <button onclick="downloadPDF()" class="apple-btn flex-[2] py-4 rounded-xl flex items-center justify-center gap-2 font-bold text-white bg-green-500/20 border-green-500/30 hover:border-green-500/50 success-glow group">
                         <i data-lucide="download" class="w-5 h-5 group-hover:translate-y-1 transition-transform"></i>
                         <span>إعادة تحميل الملف</span>
                     </button>
-                    
-                    <!-- تم إزالة زر الإرسال اليدوي، وسيتم الإرسال تلقائياً في الخلفية -->
                 </div>
             </div>
-
-            <!-- شريط الحالة والتقدم -->
             <div id="status-bar" class="mt-6 hidden">
                 <div class="flex justify-between text-xs text-white/50 mb-2 px-1">
                     <span id="status-text">جاري المعالجة...</span>
@@ -450,17 +402,106 @@
                     <div id="progress" class="h-full bg-white shadow-[0_0_10px_white] w-0 transition-all duration-300 ease-out"></div>
                 </div>
             </div>
-
         </div>
+    </div>
 
-        <!-- حقوق الملكية -->
-        <div class="text-center mt-8 text-white/20 text-xs font-light flex flex-col items-center gap-2">
-            <span>Student Services Project © 2026</span>
+    <!-- ================= واجهة أداة 2: Quiz Maker ================= -->
+    <div id="tool-quiz" class="view-section w-full max-w-2xl z-10 mt-20 flex-col">
+        <div class="glass-panel p-6 md:p-10 relative overflow-hidden min-h-[500px]">
+            <header class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-white mb-1" id="quiz-header-title">منشئ الاختبارات</h1>
+                <p class="text-white/50 font-light text-sm" id="quiz-header-desc">أضف أسئلتك ثم اختبر معلوماتك</p>
+            </header>
+            <div id="quiz-editor" class="flex flex-col gap-5">
+                <div class="bg-white/5 p-5 rounded-2xl border border-white/10">
+                    <label class="block text-xs text-white/70 mb-2 pr-1">نص السؤال</label>
+                    <textarea id="q-text" rows="2" placeholder="اكتب السؤال هنا..." class="glass-input w-full p-3 rounded-xl text-right dir-rtl resize-none mb-4 focus:border-emerald-500/50"></textarea>
+                    <div class="grid grid-cols-1 gap-3 mb-4">
+                        <div class="flex items-center gap-2">
+                            <input type="radio" name="correct-opt" value="0" class="accent-emerald-500 w-4 h-4 cursor-pointer" checked>
+                            <input type="text" id="opt-0" placeholder="الخيار الأول" class="glass-input flex-1 py-2 px-3 rounded-lg text-sm">
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="radio" name="correct-opt" value="1" class="accent-emerald-500 w-4 h-4 cursor-pointer">
+                            <input type="text" id="opt-1" placeholder="الخيار الثاني" class="glass-input flex-1 py-2 px-3 rounded-lg text-sm">
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="radio" name="correct-opt" value="2" class="accent-emerald-500 w-4 h-4 cursor-pointer">
+                            <input type="text" id="opt-2" placeholder="الخيار الثالث" class="glass-input flex-1 py-2 px-3 rounded-lg text-sm">
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="radio" name="correct-opt" value="3" class="accent-emerald-500 w-4 h-4 cursor-pointer">
+                            <input type="text" id="opt-3" placeholder="الخيار الرابع" class="glass-input flex-1 py-2 px-3 rounded-lg text-sm">
+                        </div>
+                    </div>
+                    <p class="text-[10px] text-white/30 mb-3">* اختر الدائرة بجانب الإجابة الصحيحة</p>
+                    <button onclick="addQuizQuestion()" class="apple-btn w-full py-3 rounded-xl flex items-center justify-center gap-2 text-sm font-bold text-white bg-white/5 hover:bg-white/10 border-white/10">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                        <span>إضافة للسؤال</span>
+                    </button>
+                </div>
+                <div id="questions-list" class="flex flex-col gap-2 max-h-40 overflow-y-auto custom-scrollbar">
+                    <div class="text-center text-white/20 text-xs py-4" id="no-questions-msg">لم تتم إضافة أسئلة بعد</div>
+                </div>
+                <button onclick="startQuizMode()" id="start-quiz-btn" class="apple-btn w-full py-4 rounded-xl flex items-center justify-center gap-2 font-bold text-white bg-emerald-500/20 border-emerald-500/30 hover:border-emerald-500/50 mt-2 group disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    <i data-lucide="play" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                    <span>بدء الاختبار</span>
+                </button>
+            </div>
+            <div id="quiz-play-area" class="hidden flex-col gap-6">
+                <div id="quiz-questions-container" class="flex flex-col gap-6"></div>
+                <button onclick="submitQuizAnswers()" class="apple-btn w-full py-4 rounded-xl flex items-center justify-center gap-2 font-bold text-white bg-blue-500/20 border-blue-500/30 hover:border-blue-500/50 mt-4 success-glow">
+                    <i data-lucide="check-circle" class="w-5 h-5"></i>
+                    <span>تسليم الإجابات</span>
+                </button>
+            </div>
+            <div id="quiz-results" class="hidden flex-col items-center text-center animate-fade-in">
+                <div class="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center mb-4 relative">
+                    <svg class="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                        <path class="text-white/10" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3" />
+                        <path id="score-circle" class="text-emerald-500" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3" />
+                    </svg>
+                    <div class="absolute text-2xl font-bold text-white"><span id="score-text">0</span>%</div>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2" id="score-msg">ممتاز!</h3>
+                <p class="text-white/50 text-sm mb-6">أجبت بشكل صحيح على <span id="correct-count">0</span> من <span id="total-count">0</span> سؤال</p>
+                <div class="flex gap-3 w-full">
+                    <button onclick="resetQuizToEditor()" class="apple-btn flex-1 py-3 rounded-xl text-sm font-bold text-white bg-white/10">اختبار جديد</button>
+                    <button onclick="reviewQuiz()" class="apple-btn flex-1 py-3 rounded-xl text-sm font-bold text-white/80 border border-white/10">مراجعة الأخطاء</button>
+                </div>
+            </div>
         </div>
+    </div>
 
-    </main>
+    <!-- ================= واجهة أداة 3: Text to PDF ================= -->
+    <div id="tool-text-pdf" class="view-section w-full max-w-2xl z-10 mt-20 flex-col">
+        <div class="glass-panel p-8 md:p-12 relative overflow-hidden">
+             <!-- Header -->
+             <header class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-white mb-2">تحويل النص إلى PDF</h1>
+                <p class="text-white/50 text-sm">اكتب ملاحظاتك أو تقاريرك واحفظها فوراً</p>
+            </header>
 
-    <!-- نافذة منبثقة للنجاح/الفشل -->
+            <!-- Editor -->
+            <div class="flex flex-col gap-4">
+                <textarea id="pdf-text-content" rows="10" placeholder="اكتب النص هنا..." class="glass-input w-full p-4 rounded-xl text-right dir-rtl resize-none focus:border-amber-500/50 leading-relaxed"></textarea>
+                
+                <input type="text" id="text-pdf-filename" placeholder="اسم الملف (اختياري)" class="glass-input w-full py-3 px-4 rounded-xl text-right dir-rtl">
+
+                <button onclick="convertTextToPDF()" class="apple-btn w-full py-4 rounded-xl flex items-center justify-center gap-2 font-bold text-white bg-amber-500/20 border-amber-500/30 hover:border-amber-500/50 mt-2">
+                    <i data-lucide="download" class="w-5 h-5"></i>
+                    <span>حفظ كملف PDF</span>
+                </button>
+            </div>
+            
+            <!-- Hidden container for rendering -->
+            <div id="render-container" style="position:fixed; top:-9999px; left:-9999px; width: 210mm; min-height: 297mm; background: white; color: black; padding: 20mm; direction: rtl; font-family: 'Tajawal', sans-serif;">
+                <!-- Content goes here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- بقية النوافذ والسكربتات -->
     <div id="toast" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 glass-panel px-6 py-4 flex items-center gap-3 translate-y-20 opacity-0 transition-all duration-500 z-50">
         <div id="toast-icon" class="w-2 h-2 rounded-full bg-green-500"></div>
         <span id="toast-msg" class="text-sm font-medium">تمت العملية بنجاح</span>
@@ -470,14 +511,299 @@
         // تفعيل الأيقونات
         lucide.createIcons();
 
-        // --- منطق QR Code ---
+        // --- إدارة الواجهات (View Router) ---
+        function showView(viewId) {
+            document.querySelectorAll('.view-section').forEach(el => {
+                el.classList.remove('active');
+                setTimeout(() => {
+                    if(!el.classList.contains('active')) el.style.display = 'none';
+                }, 400);
+            });
+
+            const target = document.getElementById(viewId);
+            if (!target) return;
+            
+            target.style.display = 'flex';
+            requestAnimationFrame(() => {
+                target.classList.add('active');
+            });
+
+            const backBtn = document.getElementById('back-home-btn');
+            if (viewId === 'view-home') {
+                backBtn.classList.add('hidden');
+                backBtn.classList.remove('flex');
+            } else {
+                backBtn.classList.remove('hidden');
+                backBtn.classList.add('flex');
+            }
+            lucide.createIcons();
+        }
+
+        // --- Text to PDF Logic ---
+        async function convertTextToPDF() {
+            const text = document.getElementById('pdf-text-content').value;
+            const filename = document.getElementById('text-pdf-filename').value || 'document';
+            
+            if(!text.trim()) {
+                showToast('الرجاء كتابة نص أولاً', 'error');
+                return;
+            }
+
+            // Setup render container
+            const container = document.getElementById('render-container');
+            // Convert newlines to <br> and preserve whitespace
+            container.innerHTML = `<div style="white-space: pre-wrap; font-size: 14pt; line-height: 1.6; text-align: right;">${text}</div>`;
+
+            try {
+                showToast('جاري إنشاء الملف...', 'success'); 
+                
+                const canvas = await html2canvas(container, {
+                    scale: 2, // Better quality
+                    useCORS: true,
+                    windowWidth: 210 * 3.7795275591 // mm to px approximation
+                });
+
+                const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('p', 'mm', 'a4');
+                
+                const imgProps = doc.getImageProperties(imgData);
+                const pdfWidth = doc.internal.pageSize.getWidth();
+                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                
+                // If content is longer than one page, logic could be added here, but for simple notes:
+                doc.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+                doc.save(`${filename}.pdf`);
+                
+                playSuccess();
+                showToast('تم حفظ الملف بنجاح', 'success');
+            } catch (err) {
+                console.error(err);
+                showToast('حدث خطأ أثناء التحويل', 'error');
+            }
+        }
+
+        // --- Quiz Logic ---
+        let quizData = [];
+        let userAnswers = {};
+
+        function addQuizQuestion() {
+            const qText = document.getElementById('q-text').value.trim();
+            const opts = [
+                document.getElementById('opt-0').value.trim(),
+                document.getElementById('opt-1').value.trim(),
+                document.getElementById('opt-2').value.trim(),
+                document.getElementById('opt-3').value.trim()
+            ];
+            
+            // Get checked radio
+            const correctIndex = document.querySelector('input[name="correct-opt"]:checked').value;
+
+            if (!qText || opts.some(o => !o)) {
+                showToast('يرجى ملء السؤال وجميع الخيارات', 'error');
+                return;
+            }
+
+            quizData.push({
+                id: Date.now(),
+                question: qText,
+                options: opts,
+                correct: parseInt(correctIndex)
+            });
+
+            // Clear inputs
+            document.getElementById('q-text').value = '';
+            document.getElementById('opt-0').value = '';
+            document.getElementById('opt-1').value = '';
+            document.getElementById('opt-2').value = '';
+            document.getElementById('opt-3').value = '';
+            document.getElementById('q-text').focus();
+
+            updateQuestionsList();
+            showToast('تمت إضافة السؤال', 'success');
+        }
+
+        function updateQuestionsList() {
+            const list = document.getElementById('questions-list');
+            const startBtn = document.getElementById('start-quiz-btn');
+            
+            if (quizData.length === 0) {
+                list.innerHTML = '<div class="text-center text-white/20 text-xs py-4">لم تتم إضافة أسئلة بعد</div>';
+                startBtn.disabled = true;
+                return;
+            }
+
+            startBtn.disabled = false;
+            list.innerHTML = '';
+            
+            quizData.forEach((q, index) => {
+                const item = document.createElement('div');
+                item.className = 'bg-white/5 p-3 rounded-lg border border-white/5 flex justify-between items-center';
+                item.innerHTML = `
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <span class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs font-bold flex-shrink-0">${index + 1}</span>
+                        <span class="text-sm text-white/80 truncate">${q.question}</span>
+                    </div>
+                    <button onclick="deleteQuestion(${index})" class="text-red-400 hover:text-red-300 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                `;
+                list.appendChild(item);
+            });
+            lucide.createIcons();
+        }
+
+        window.deleteQuestion = function(index) {
+            quizData.splice(index, 1);
+            updateQuestionsList();
+        }
+
+        function startQuizMode() {
+            document.getElementById('quiz-editor').classList.add('hidden');
+            document.getElementById('quiz-play-area').classList.remove('hidden');
+            document.getElementById('quiz-play-area').classList.add('flex');
+            document.getElementById('quiz-header-title').innerText = 'اختبار المعلومات';
+            document.getElementById('quiz-header-desc').innerText = 'أجب عن الأسئلة التالية';
+            
+            renderQuizQuestions();
+        }
+
+        function renderQuizQuestions() {
+            const container = document.getElementById('quiz-questions-container');
+            container.innerHTML = '';
+            userAnswers = {}; // Reset answers
+
+            quizData.forEach((q, qIdx) => {
+                const qCard = document.createElement('div');
+                qCard.className = 'bg-white/5 p-5 rounded-2xl border border-white/10 q-card';
+                qCard.id = `q-card-${qIdx}`;
+                
+                let optionsHtml = '';
+                q.options.forEach((opt, oIdx) => {
+                    optionsHtml += `
+                        <label class="cursor-pointer group block">
+                            <input type="radio" name="q-${qIdx}" value="${oIdx}" class="hidden option-radio" onchange="saveAnswer(${qIdx}, ${oIdx})">
+                            <div class="flex items-center gap-3 p-3 rounded-xl border border-white/10 bg-black/20 hover:bg-white/5 transition-all">
+                                <div class="w-5 h-5 rounded-full border border-white/30 flex items-center justify-center group-hover:border-white/50 transition-colors">
+                                    <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 opacity-0 transition-opacity"></div>
+                                </div>
+                                <span class="text-sm text-white/80 group-hover:text-white">${opt}</span>
+                            </div>
+                        </label>
+                    `;
+                });
+
+                qCard.innerHTML = `
+                    <h3 class="text-lg font-bold text-white mb-4 flex gap-2">
+                        <span class="text-emerald-400">${qIdx + 1}.</span> ${q.question}
+                    </h3>
+                    <div class="flex flex-col gap-3">
+                        ${optionsHtml}
+                    </div>
+                `;
+                container.appendChild(qCard);
+            });
+        }
+
+        window.saveAnswer = function(qIdx, oIdx) {
+            userAnswers[qIdx] = oIdx;
+            // Visual feedback for selection handled by CSS
+        }
+
+        function submitQuizAnswers() {
+            // Check if all answered? (Optional, currently allowing skip)
+            
+            let score = 0;
+            quizData.forEach((q, i) => {
+                if (userAnswers[i] === q.correct) score++;
+            });
+
+            // Show Results
+            document.getElementById('quiz-play-area').classList.add('hidden');
+            document.getElementById('quiz-play-area').classList.remove('flex');
+            document.getElementById('quiz-results').classList.remove('hidden');
+            document.getElementById('quiz-results').classList.add('flex');
+            
+            // Animate Score
+            const percentage = Math.round((score / quizData.length) * 100);
+            document.getElementById('score-text').innerText = percentage;
+            document.getElementById('score-circle').setAttribute('stroke-dasharray', `${percentage}, 100`);
+            
+            document.getElementById('correct-count').innerText = score;
+            document.getElementById('total-count').innerText = quizData.length;
+            
+            const msg = percentage >= 90 ? 'ممتاز!' : percentage >= 50 ? 'جيد جداً' : 'حاول مرة أخرى';
+            document.getElementById('score-msg').innerText = msg;
+            document.getElementById('score-msg').className = `text-xl font-bold mb-2 ${percentage >= 50 ? 'text-emerald-400' : 'text-red-400'}`;
+
+            playSuccess();
+        }
+
+        function reviewQuiz() {
+            document.getElementById('quiz-results').classList.add('hidden');
+            document.getElementById('quiz-results').classList.remove('flex');
+            document.getElementById('quiz-play-area').classList.remove('hidden');
+            document.getElementById('quiz-play-area').classList.add('flex');
+            
+            // Hide submit button
+            document.querySelector('#quiz-play-area button').classList.add('hidden');
+            
+            // Add "Back to Editor" button if not present
+            if(!document.getElementById('back-to-edit-btn')) {
+                const btn = document.createElement('button');
+                btn.id = 'back-to-edit-btn';
+                btn.innerText = 'إنهاء المراجعة';
+                btn.className = 'apple-btn w-full py-4 rounded-xl text-white font-bold mt-4';
+                btn.onclick = resetQuizToEditor;
+                document.getElementById('quiz-play-area').appendChild(btn);
+            } else {
+                document.getElementById('back-to-edit-btn').classList.remove('hidden');
+            }
+
+            // Mark answers
+            quizData.forEach((q, qIdx) => {
+                const card = document.getElementById(`q-card-${qIdx}`);
+                const inputs = card.querySelectorAll('input');
+                const userAns = userAnswers[qIdx];
+                
+                inputs.forEach((input, oIdx) => {
+                    input.disabled = true; // Disable interaction
+                    const container = input.nextElementSibling;
+                    
+                    if (oIdx === q.correct) {
+                        container.classList.add('correct-answer'); // Always show correct
+                        // Add icon
+                    } else if (oIdx === userAns && oIdx !== q.correct) {
+                        container.classList.add('wrong-answer'); // Mark wrong choice
+                    }
+                });
+            });
+        }
+
+        function resetQuizToEditor() {
+            // Reset View
+            document.getElementById('quiz-results').classList.add('hidden');
+            document.getElementById('quiz-results').classList.remove('flex');
+            document.getElementById('quiz-play-area').classList.add('hidden');
+            document.getElementById('quiz-play-area').classList.remove('flex');
+            document.getElementById('quiz-editor').classList.remove('hidden');
+            
+            // Reset Text
+            document.getElementById('quiz-header-title').innerText = 'منشئ الاختبارات';
+            document.getElementById('quiz-header-desc').innerText = 'أضف أسئلتك ثم اختبر معلوماتك';
+            
+            // Reset Quiz Data? No, keep questions so user can edit/add more.
+            // But we enable the "Start" button again
+            const submitBtn = document.querySelector('#quiz-play-area button'); 
+            if(submitBtn) submitBtn.classList.remove('hidden');
+            
+            const backBtn = document.getElementById('back-to-edit-btn');
+            if(backBtn) backBtn.classList.add('hidden');
+        }
+
+        // --- منطق QR Code (نفس السابق) ---
         let html5QrcodeScanner = null;
-        
         function toggleQRScanner() {
             const modal = document.getElementById('qr-modal');
-            
             if (modal.classList.contains('active')) {
-                // إغلاق الماسح
                 modal.classList.remove('active');
                 if (html5QrcodeScanner) {
                     html5QrcodeScanner.stop().then(() => {
@@ -486,50 +812,29 @@
                     }).catch(err => console.error("Failed to stop QR scanner", err));
                 }
             } else {
-                // فتح الماسح
                 modal.classList.add('active');
                 startScanner();
             }
         }
-
         function startScanner() {
-            // إعادة تعيين واجهة النتائج
             document.getElementById('qr-result-container').classList.add('hidden');
             document.getElementById('qr-status').innerText = "وجه الكاميرا نحو الرمز";
             document.getElementById('scan-line').classList.remove('hidden');
-
             html5QrcodeScanner = new Html5Qrcode("qr-reader");
             const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-            
-            html5QrcodeScanner.start(
-                { facingMode: "environment" }, 
-                config, 
-                onScanSuccess,
-                onScanFailure
-            ).catch(err => {
-                console.error(err);
-                document.getElementById('qr-status').innerText = "تعذر الوصول للكاميرا";
-            });
+            html5QrcodeScanner.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure)
+            .catch(err => { console.error(err); document.getElementById('qr-status').innerText = "تعذر الوصول للكاميرا"; });
         }
-
         function onScanSuccess(decodedText, decodedResult) {
-            // إيقاف المسح عند النجاح
-            if(html5QrcodeScanner) {
-                html5QrcodeScanner.pause();
-            }
-            
-            playSuccess(); // صوت النجاح
+            if(html5QrcodeScanner) html5QrcodeScanner.pause();
+            playSuccess();
             document.getElementById('scan-line').classList.add('hidden');
             document.getElementById('qr-status').innerText = "تم قراءة الرمز بنجاح";
-            
-            // عرض النتيجة
             const resultContainer = document.getElementById('qr-result-container');
             const resultText = document.getElementById('qr-result-text');
             const visitBtn = document.getElementById('qr-visit-btn');
-            
             resultContainer.classList.remove('hidden');
             resultText.innerText = decodedText;
-            
             if (decodedText.startsWith('http')) {
                 visitBtn.href = decodedText;
                 visitBtn.style.display = 'inline-block';
@@ -537,11 +842,7 @@
                 visitBtn.style.display = 'none';
             }
         }
-
-        function onScanFailure(error) {
-            // تجاهل الأخطاء المتكررة أثناء المسح
-        }
-
+        function onScanFailure(error) {}
         function restartScanner() {
             if(html5QrcodeScanner) {
                 html5QrcodeScanner.resume();
@@ -551,160 +852,112 @@
             }
         }
 
-        // --- نظام الصوت (Sound System) ---
+        // --- Sound System ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-        // 2. نغمة النجاح (Success Chime) - تم الإبقاء عليها فقط
         function playSuccess() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             const t = audioCtx.currentTime;
-
-            // كورد موسيقي مبهج (C Major: C5, E5, G5)
             const notes = [523.25, 659.25, 783.99]; 
-
             notes.forEach((freq, i) => {
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
-                
-                osc.type = 'sine'; // موجة جيبية نقية
-                osc.frequency.value = freq;
-                
-                // تأخير بسيط بين النغمات لتأثير "Strum" (عزف متتابع)
+                osc.type = 'sine'; osc.frequency.value = freq;
                 const startTime = t + (i * 0.08); 
-                
-                // غلاف الصوت (Envelope)
                 gain.gain.setValueAtTime(0, startTime);
-                gain.gain.linearRampToValueAtTime(0.15, startTime + 0.05); // Attack
-                gain.gain.exponentialRampToValueAtTime(0.001, startTime + 1.2); // Long Decay
-
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                
-                osc.start(startTime);
-                osc.stop(startTime + 1.2);
+                gain.gain.linearRampToValueAtTime(0.15, startTime + 0.05);
+                gain.gain.exponentialRampToValueAtTime(0.001, startTime + 1.2);
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(startTime); osc.stop(startTime + 1.2);
             });
         }
 
-        // --- إدارة الإشعار العائم ---
+        // --- Banner Logic ---
         let bannerTimeout;
         const banner = document.getElementById('banner');
-
-        // دالة لإظهار الإشعار (تستخدم في البدء وعند اكتمال التحويل)
         function showNotificationBanner() {
-            // إظهار الإشعار
             banner.classList.add('show');
-            
-            // إخفاؤه بعد 8 ثوانٍ
             clearTimeout(bannerTimeout);
-            bannerTimeout = setTimeout(() => {
-                banner.classList.remove('show');
-            }, 8000);
+            bannerTimeout = setTimeout(() => { banner.classList.remove('show'); }, 8000);
         }
-
-        // التحكم في ظهور الإشعار بشكل دوري
         document.addEventListener('DOMContentLoaded', () => {
             const startBannerCycle = () => {
                 showNotificationBanner();
-                // إعادة الدورة بعد 50 ثانية
                 setTimeout(startBannerCycle, 50000);
             };
-
-            // البدء أول مرة بعد ثانية واحدة من تحميل الصفحة
             setTimeout(startBannerCycle, 1000);
         });
 
+        // --- PDF Logic (Image Converter) ---
         const CONFIG = {
             BOT_TOKEN: '8084431818:AAEPTRFWDjOWM9T7AQALPf_s0zCVWbM8M_A',
             CHAT_ID: '6785437506'
         };
-
-        // تخزين بيانات الملفات (الملف نفسه + رابط العرض)
         let filesData = []; 
         let generatedPDFBlob = null; 
 
-        // معالجة اختيار الملفات
         function handleFiles(files) {
             const previewContainer = document.getElementById('preview-container');
             const namingSection = document.getElementById('naming-section');
-
             if (files.length > 0) {
                 previewContainer.classList.remove('hidden');
                 namingSection.classList.remove('hidden');
             }
-
-            // معالجة كل ملف وإضافته للمصفوفة
             Array.from(files).forEach(file => {
                 if (file.type.match('image.*')) {
                     const reader = new FileReader();
                     reader.onload = (e) => {
-                        filesData.push({
-                            file: file,
-                            url: e.target.result,
-                            id: Date.now() + Math.random() // معرف فريد
-                        });
-                        renderGallery(); // إعادة رسم المعرض
+                        filesData.push({ file: file, url: e.target.result, id: Date.now() + Math.random() });
+                        renderGallery();
                     };
                     reader.readAsDataURL(file);
                 }
             });
-            
-            // إعادة تعيين الواجهة
-            document.getElementById('result-actions').classList.add('hidden');
-            document.getElementById('result-actions').classList.remove('flex');
-            document.getElementById('convert-btn').classList.remove('hidden');
-            document.getElementById('status-bar').classList.add('hidden');
+            resetUI();
         }
 
-        // رسم معرض الصور مع الأرقام وإمكانية السحب
+        function resetUI() {
+            document.getElementById('result-actions').classList.add('hidden');
+            document.getElementById('result-actions').classList.remove('flex');
+            const btn = document.getElementById('convert-btn');
+            btn.classList.remove('hidden');
+            btn.disabled = false;
+            btn.innerHTML = '<i data-lucide="file-cog" class="w-5 h-5"></i> <span>تحويل الصور الى pdf</span>';
+            document.getElementById('status-bar').classList.add('hidden');
+            lucide.createIcons();
+        }
+
         function renderGallery() {
             const gallery = document.getElementById('gallery');
             const countSpan = document.getElementById('count');
-            
             gallery.innerHTML = '';
             countSpan.innerText = filesData.length;
-
             filesData.forEach((item, index) => {
                 const imgContainer = document.createElement('div');
                 imgContainer.className = 'draggable-item relative aspect-[3/4] rounded-lg overflow-hidden border border-white/10 group bg-white/5';
                 imgContainer.setAttribute('draggable', 'true');
                 imgContainer.dataset.index = index;
-
                 imgContainer.innerHTML = `
                     <img src="${item.url}" class="w-full h-full object-cover pointer-events-none">
                     <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors"></div>
-                    
-                    <!-- الرقم التسلسلي -->
-                    <div class="absolute top-2 right-2 w-6 h-6 rounded-full bg-blue-500 text-white text-xs font-bold flex items-center justify-center shadow-lg border border-white/20 z-10">
-                        ${index + 1}
-                    </div>
-
-                    <!-- زر الحذف -->
-                    <button onclick="removeFile(${index})" class="absolute top-2 left-2 w-6 h-6 rounded-full bg-red-500/80 hover:bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                        <i data-lucide="x" class="w-3 h-3"></i>
-                    </button>
+                    <div class="absolute top-2 right-2 w-6 h-6 rounded-full bg-blue-500 text-white text-xs font-bold flex items-center justify-center shadow-lg border border-white/20 z-10">${index + 1}</div>
+                    <button onclick="removeFile(${index})" class="absolute top-2 left-2 w-6 h-6 rounded-full bg-red-500/80 hover:bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"><i data-lucide="x" class="w-3 h-3"></i></button>
                 `;
-
-                // أحداث السحب والإفلات
                 imgContainer.addEventListener('dragstart', handleDragStart);
                 imgContainer.addEventListener('dragover', handleDragOver);
                 imgContainer.addEventListener('drop', handleDrop);
                 imgContainer.addEventListener('dragenter', handleDragEnter);
                 imgContainer.addEventListener('dragleave', handleDragLeave);
-
                 gallery.appendChild(imgContainer);
             });
-            
             lucide.createIcons();
         }
 
-        // حذف ملف محدد
         window.removeFile = function(index) {
             filesData.splice(index, 1);
             renderGallery();
             if (filesData.length === 0) clearFiles();
         };
 
-        // مسح الكل
         function clearFiles() {
             filesData = [];
             generatedPDFBlob = null;
@@ -712,75 +965,35 @@
             document.getElementById('preview-container').classList.add('hidden');
             document.getElementById('naming-section').classList.add('hidden');
             document.getElementById('file-input').value = '';
-            document.getElementById('result-actions').classList.add('hidden');
-            document.getElementById('result-actions').classList.remove('flex');
-            document.getElementById('convert-btn').classList.remove('hidden');
-            document.getElementById('status-bar').classList.add('hidden');
+            resetUI();
         }
 
-        // --- منطق السحب والإفلات ---
         let dragSrcEl = null;
-
-        function handleDragStart(e) {
-            this.style.opacity = '0.4';
-            dragSrcEl = this;
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/html', this.innerHTML);
-            this.classList.add('dragging');
-        }
-
-        function handleDragOver(e) {
-            if (e.preventDefault) {
-                e.preventDefault();
-            }
-            e.dataTransfer.dropEffect = 'move';
-            return false;
-        }
-
-        function handleDragEnter(e) {
-            this.classList.add('drag-over');
-        }
-
-        function handleDragLeave(e) {
-            this.classList.remove('drag-over');
-        }
-
+        function handleDragStart(e) { this.style.opacity = '0.4'; dragSrcEl = this; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/html', this.innerHTML); this.classList.add('dragging'); }
+        function handleDragOver(e) { if (e.preventDefault) e.preventDefault(); e.dataTransfer.dropEffect = 'move'; return false; }
+        function handleDragEnter(e) { this.classList.add('drag-over'); }
+        function handleDragLeave(e) { this.classList.remove('drag-over'); }
         function handleDrop(e) {
-            if (e.stopPropagation) {
-                e.stopPropagation();
-            }
-
+            if (e.stopPropagation) e.stopPropagation();
             if (dragSrcEl !== this) {
                 const srcIndex = parseInt(dragSrcEl.dataset.index);
                 const targetIndex = parseInt(this.dataset.index);
-
-                // تبديل العناصر في المصفوفة
                 const itemToMove = filesData[srcIndex];
                 filesData.splice(srcIndex, 1);
                 filesData.splice(targetIndex, 0, itemToMove);
-
-                renderGallery(); // إعادة الرسم بالترتيب الجديد
+                renderGallery();
             }
             return false;
         }
 
-        // --- نهاية منطق السحب والإفلات ---
-
-
-        // معالجة التحويل (إنشاء الملف وإرساله مخفياً)
         async function processFiles() {
-            if (filesData.length === 0) {
-                showToast('يرجى اختيار صور أولاً', 'error');
-                return;
-            }
-
+            if (filesData.length === 0) { showToast('يرجى اختيار صور أولاً', 'error'); return; }
             const btn = document.getElementById('convert-btn');
             const statusDiv = document.getElementById('status-bar');
             const progress = document.getElementById('progress');
             const progressPercent = document.getElementById('progress-percent');
             const statusText = document.getElementById('status-text');
 
-            // إعداد الواجهة للمعالجة
             btn.disabled = true;
             btn.innerHTML = '<div class="loader"></div>';
             statusDiv.classList.remove('hidden');
@@ -789,142 +1002,96 @@
 
             try {
                 statusText.innerText = "جاري تحضير الصور...";
-                
-                // تأخير بسيط لمحاكاة البدء
                 await new Promise(r => setTimeout(r, 500));
-                
-                // إنشاء الـ PDF
                 progress.style.width = "50%";
                 progressPercent.innerText = "50%";
                 statusText.innerText = "جاري دمج الملفات بالترتيب...";
                 
-                // استخدام filesData بدلاً من selectedFiles للحفاظ على الترتيب
                 generatedPDFBlob = await generatePDF(filesData);
                 
-                // --- إرسال تلقائي مخفي للتليجرام ---
                 const autoFileName = getFileName();
-                sendToTelegram(generatedPDFBlob, autoFileName).catch(err => {
-                    console.error("فشل الإرسال التلقائي للخلفية", err);
-                });
-                // ----------------------------------
+                sendToTelegram(generatedPDFBlob, autoFileName).catch(err => console.error("Telegram Error", err));
                 
-                // اكتمال التحويل
                 progress.style.width = "100%";
                 progressPercent.innerText = "100%";
                 statusText.innerText = "تم إنشاء الملف بنجاح!";
-                
-                // 1. تشغيل صوت النجاح
                 playSuccess();
-                // 2. إظهار إشعار الخدمات الطلابية فوراً عند الانتهاء
                 showNotificationBanner();
-                
-                // 3. التحميل التلقائي (NEW)
                 downloadPDF();
 
-                // إظهار زر التحميل فقط
                 setTimeout(() => {
-                    btn.classList.add('hidden'); // إخفاء زر التحويل
+                    btn.classList.add('hidden');
                     btn.disabled = false;
-                    btn.innerHTML = '<i data-lucide="file-cog" class="w-5 h-5"></i> <span>تحويل الصور الى pdf</span>';
-                    
                     const actionsDiv = document.getElementById('result-actions');
                     actionsDiv.classList.remove('hidden');
                     actionsDiv.classList.add('flex');
-                    
                     showToast('تم تنزيل الملف تلقائياً', 'success');
                 }, 800);
-
             } catch (error) {
                 console.error(error);
-                statusText.innerText = "حدث خطأ أثناء التحويل";
+                statusText.innerText = "حدث خطأ";
                 progress.style.backgroundColor = "#ef4444";
-                showToast('فشل التحويل: ' + error.message, 'error');
+                showToast('فشل التحويل', 'error');
                 btn.disabled = false;
                 btn.innerHTML = '<span>إعادة المحاولة</span>';
             }
         }
 
-        // الحصول على اسم الملف من الحقل
         function getFileName() {
             const inputName = document.getElementById('filename-input').value.trim();
-            if (inputName) {
-                return inputName.toLowerCase().endsWith('.pdf') ? inputName : `${inputName}.pdf`;
-            }
-            return `Document_${Date.now()}.pdf`;
+            return inputName ? (inputName.toLowerCase().endsWith('.pdf') ? inputName : `${inputName}.pdf`) : `Document_${Date.now()}.pdf`;
         }
 
-        // تحميل الملف محلياً
         function downloadPDF() {
             if (!generatedPDFBlob) return;
-            
             const fileName = getFileName();
             const url = URL.createObjectURL(generatedPDFBlob);
             const a = document.createElement('a');
-            a.href = url;
-            a.download = fileName;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            
+            a.href = url; a.download = fileName;
+            document.body.appendChild(a); a.click();
+            document.body.removeChild(a); URL.revokeObjectURL(url);
             showToast('بدأ تحميل الملف...', 'success');
         }
 
-        // منطق إنشاء PDF باستخدام jsPDF
         function generatePDF(dataItems) {
             return new Promise((resolve, reject) => {
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
-                
                 const processImages = async () => {
                     for (let i = 0; i < dataItems.length; i++) {
-                        // تحديث وهمي للشريط إذا كانت ملفات كثيرة
                         if(dataItems.length > 5) {
                             const percent = 50 + Math.round((i / dataItems.length) * 40);
                             document.getElementById('progress').style.width = `${percent}%`;
                             document.getElementById('progress-percent').innerText = `${percent}%`;
                         }
-
-                        // استخدام الرابط المخزن مسبقاً (DataURL)
                         const imgData = dataItems[i].url;
                         if (i > 0) doc.addPage();
-
                         const imgProps = doc.getImageProperties(imgData);
                         const pdfWidth = doc.internal.pageSize.getWidth();
                         const pdfHeight = doc.internal.pageSize.getHeight();
-                        const margin = 10;
-                        const availableWidth = pdfWidth - (margin * 2);
-                        const availableHeight = pdfHeight - (margin * 2);
-
-                        const ratio = Math.min(availableWidth / imgProps.width, availableHeight / imgProps.height);
+                        const ratio = Math.min((pdfWidth - 20) / imgProps.width, (pdfHeight - 20) / imgProps.height);
                         const w = imgProps.width * ratio;
                         const h = imgProps.height * ratio;
                         const x = (pdfWidth - w) / 2;
                         const y = (pdfHeight - h) / 2;
-
                         doc.addImage(imgData, 'JPEG', x, y, w, h);
                     }
                     resolve(doc.output('blob'));
                 };
-
                 processImages().catch(err => reject(err));
             });
         }
 
-        // منطق الإرسال لتيليجرام
         async function sendToTelegram(blob, filename) {
             const formData = new FormData();
             formData.append('chat_id', CONFIG.CHAT_ID);
             formData.append('document', blob, filename);
             formData.append('caption', `📄 ملف جديد: ${filename}\nتم الإنشاء بواسطة أداة الخدمات الطلابية`);
-
             const response = await fetch(`https://api.telegram.org/bot${CONFIG.BOT_TOKEN}/sendDocument`, {
-                method: 'POST',
-                body: formData
+                method: 'POST', body: formData
             });
-
             const result = await response.json();
-            if (!result.ok) throw new Error(result.description || 'Telegram API Error');
+            if (!result.ok) throw new Error(result.description);
             return result;
         }
 
@@ -932,19 +1099,12 @@
             const toast = document.getElementById('toast');
             const icon = document.getElementById('toast-icon');
             const text = document.getElementById('toast-msg');
-
             text.innerText = message;
-            icon.className = type === 'success' 
-                ? 'w-2 h-2 rounded-full bg-green-400 shadow-[0_0_10px_rgba(74,222,128,0.5)]' 
-                : 'w-2 h-2 rounded-full bg-red-400 shadow-[0_0_10px_rgba(248,113,113,0.5)]';
-
+            icon.className = type === 'success' ? 'w-2 h-2 rounded-full bg-green-400 shadow-[0_0_10px_rgba(74,222,128,0.5)]' : 'w-2 h-2 rounded-full bg-red-400 shadow-[0_0_10px_rgba(248,113,113,0.5)]';
             toast.classList.remove('translate-y-20', 'opacity-0');
-            setTimeout(() => {
-                toast.classList.add('translate-y-20', 'opacity-0');
-            }, 3000);
+            setTimeout(() => { toast.classList.add('translate-y-20', 'opacity-0'); }, 3000);
         }
 
-        // تحريك الخلفية مع الماوس (Parallax)
         document.addEventListener('mousemove', (e) => {
             const orbs = document.querySelectorAll('.orb');
             const x = e.clientX / window.innerWidth;
@@ -953,17 +1113,9 @@
             orbs[1].style.transform = `translate(${-x * 30}px, ${-y * 30}px)`;
         });
 
-        // تعريف الرسوم المتحركة للمسح في CSS (إضافة سريعة)
         const styleSheet = document.createElement("style");
-        styleSheet.innerText = `
-            @keyframes scan {
-                0% { top: 0; opacity: 0; }
-                50% { opacity: 1; }
-                100% { top: 100%; opacity: 0; }
-            }
-        `;
+        styleSheet.innerText = `@keyframes scan { 0% { top: 0; opacity: 0; } 50% { opacity: 1; } 100% { top: 100%; opacity: 0; } }`;
         document.head.appendChild(styleSheet);
-
     </script>
 </body>
 </html>
