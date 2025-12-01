@@ -219,7 +219,7 @@
             <div onclick="showView('tool-todo')" class="glass-card p-6 flex items-center gap-4"><div class="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center text-purple-400"><i data-lucide="list-todo" class="w-6 h-6"></i></div><div><h3 class="font-bold text-white">قائمة المهام</h3></div></div>
             <!-- 5. Pomodoro (IFRAME - REPLACED) -->
             <div onclick="showView('tool-pomodoro')" class="glass-card p-6 flex items-center gap-4"><div class="w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center text-red-400"><i data-lucide="timer" class="w-6 h-6"></i></div><div><h3 class="font-bold text-white">مؤقت التركيز</h3></div></div>
-            <!-- 6. Calculator -->
+            <!-- 6. Calculator (IFRAME - REPLACED) -->
             <div onclick="showView('tool-calculator')" class="glass-card p-6 flex items-center gap-4"><div class="w-12 h-12 rounded-xl bg-cyan-500/20 flex items-center justify-center text-cyan-400"><i data-lucide="calculator" class="w-6 h-6"></i></div><div><h3 class="font-bold text-white">حاسبة علمية</h3></div></div>
             <!-- 7. Notes (IFRAME) -->
             <div onclick="showView('tool-notes')" class="glass-card p-6 flex items-center gap-4"><div class="w-12 h-12 rounded-xl bg-yellow-500/20 flex items-center justify-center text-yellow-400"><i data-lucide="sticky-note" class="w-6 h-6"></i></div><div><h3 class="font-bold text-white">لوحة الملاحظات</h3><p class="text-xs text-white/50">أوراق لاصقة</p></div></div>
@@ -324,6 +324,22 @@
         <iframe src="https://engineeralii.github.io/timer/" class="w-full flex-1 bg-white border-0" allow="clipboard-read; clipboard-write"></iframe>
     </div>
 
+    <!-- 7. Calculator (IFRAME - REPLACED) -->
+    <div id="tool-calculator" class="view-section fixed inset-0 z-[150] bg-slate-900 flex-col">
+        <div class="bg-slate-800 border-b border-slate-700 shadow-lg z-20 px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <button onclick="showView('view-home')" class="text-slate-400 hover:text-white transition-colors p-1">
+                    <i data-lucide="arrow-right" class="w-6 h-6"></i>
+                </button>
+                <h1 class="text-lg font-bold text-white">حاسبة علمية</h1>
+            </div>
+            <a href="https://engineeralii.github.io/cl/" target="_blank" class="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1">
+                <i data-lucide="external-link" class="w-4 h-4"></i> فتح في نافذة جديدة
+            </a>
+        </div>
+        <iframe src="https://engineeralii.github.io/cl/" class="w-full flex-1 bg-white border-0" allow="clipboard-read; clipboard-write"></iframe>
+    </div>
+
     <!-- Support Chat Tool -->
     <div id="tool-chat" class="view-section w-full max-w-md z-10 mt-20 flex-col">
         <div class="glass-panel p-0 flex flex-col h-[600px] overflow-hidden">
@@ -339,7 +355,6 @@
 
     <!-- Other Tools (Hidden by default) -->
     <div id="tool-todo" class="view-section w-full max-w-2xl z-10 mt-20 flex-col"><div class="glass-panel p-6"><h2 class="text-white text-center mb-4">المهام</h2><div class="flex gap-2 mb-4"><input id="todo-input" class="glass-input flex-1 p-2 rounded-lg text-right" placeholder="مهمة جديدة"><button onclick="addTodo()" class="apple-btn px-4 text-white rounded-lg">+</button></div><div id="todo-list" class="space-y-2"></div></div></div>
-    <div id="tool-calculator" class="view-section w-full max-w-md z-10 mt-20 flex-col items-center"><div class="bg-black rounded-[40px] p-4 w-full max-w-[360px] shadow-2xl border border-white/10 relative overflow-hidden"><div class="w-full h-40 mb-2 text-right flex flex-col justify-end px-4"><div id="calc-mode-indicator" class="text-white/30 text-xs mb-1 tracking-widest uppercase">DEG</div><span id="calc-display" class="text-[3.5rem] font-light text-white leading-none font-sans tracking-tight truncate">0</span></div><div class="flex justify-between mb-4 px-2"><button onclick="toggleCalcMode()" class="text-orange-400 text-xs flex items-center gap-1 hover:text-orange-300 transition-colors"><i data-lucide="flask-conical" class="w-3 h-3"></i> <span id="calc-toggle-text">علمي</span></button><button onclick="deleteCalc()" class="text-white/50 text-xs hover:text-white transition-colors"><i data-lucide="delete" class="w-4 h-4"></i></button></div><div id="scientific-keys" class="grid grid-cols-4 gap-2 mb-3 hidden animate-fade-in transition-all"><button onclick="appendFunc('sin(')" class="ios-btn-sci">sin</button><button onclick="appendFunc('cos(')" class="ios-btn-sci">cos</button><button onclick="appendFunc('tan(')" class="ios-btn-sci">tan</button><button onclick="toggleAngleMode()" class="ios-btn-sci">Deg</button><button onclick="appendFunc('asin(')" class="ios-btn-sci">sin⁻¹</button><button onclick="appendFunc('acos(')" class="ios-btn-sci">cos⁻¹</button><button onclick="appendFunc('atan(')" class="ios-btn-sci">tan⁻¹</button><button onclick="appendFunc('fact(')" class="ios-btn-sci">x!</button><button onclick="appendFunc('sinh(')" class="ios-btn-sci">sinh</button><button onclick="appendFunc('cosh(')" class="ios-btn-sci">cosh</button><button onclick="appendFunc('tanh(')" class="ios-btn-sci">tanh</button><button onclick="appendFunc('abs(')" class="ios-btn-sci">|x|</button><button onclick="appendFunc('log(')" class="ios-btn-sci">log</button><button onclick="appendFunc('ln(')" class="ios-btn-sci">ln</button><button onclick="appendFunc('sqrt(')" class="ios-btn-sci">√</button><button onclick="appendFunc('cbrt(')" class="ios-btn-sci">∛</button><button onclick="appendCalc('^')" class="ios-btn-sci">x^y</button><button onclick="appendCalc('^2')" class="ios-btn-sci">x²</button><button onclick="appendCalc('^(-1)')" class="ios-btn-sci">1/x</button><button onclick="appendCalc('e')" class="ios-btn-sci">e</button><button onclick="appendCalc('pi')" class="ios-btn-sci">π</button><button onclick="appendCalc('(')" class="ios-btn-sci">(</button><button onclick="appendCalc(')')" class="ios-btn-sci">)</button><button onclick="appendCalc('%')" class="ios-btn-sci">%</button></div><div class="grid grid-cols-4 gap-3"><button onclick="clearCalc()" class="ios-calc-btn ios-btn-func">AC</button><button onclick="negateCalc()" class="ios-calc-btn ios-btn-func">+/-</button><button onclick="percentCalc()" class="ios-calc-btn ios-btn-func">%</button><button onclick="appendCalc('/')" class="ios-calc-btn ios-btn-op">÷</button><button onclick="appendCalc('7')" class="ios-calc-btn ios-btn-num">7</button><button onclick="appendCalc('8')" class="ios-calc-btn ios-btn-num">8</button><button onclick="appendCalc('9')" class="ios-calc-btn ios-btn-num">9</button><button onclick="appendCalc('*')" class="ios-calc-btn ios-btn-op">×</button><button onclick="appendCalc('4')" class="ios-calc-btn ios-btn-num">4</button><button onclick="appendCalc('5')" class="ios-calc-btn ios-btn-num">5</button><button onclick="appendCalc('6')" class="ios-calc-btn ios-btn-num">6</button><button onclick="appendCalc('-')" class="ios-calc-btn ios-btn-op">−</button><button onclick="appendCalc('1')" class="ios-calc-btn ios-btn-num">1</button><button onclick="appendCalc('2')" class="ios-calc-btn ios-btn-num">2</button><button onclick="appendCalc('3')" class="ios-calc-btn ios-btn-num">3</button><button onclick="appendCalc('+')" class="ios-calc-btn ios-btn-op">+</button><button onclick="appendCalc('0')" class="ios-calc-btn ios-btn-num ios-btn-zero pl-8">0</button><button onclick="appendCalc('.')" class="ios-calc-btn ios-btn-num">.</button><button onclick="calculateResult()" class="ios-calc-btn ios-btn-op">=</button></div></div></div>
 
     <!-- Toast -->
     <div id="toast" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 glass-panel px-6 py-4 flex items-center gap-3 translate-y-20 opacity-0 transition-all duration-500 z-[200]"><div id="toast-icon" class="w-2 h-2 rounded-full bg-green-500"></div><span id="toast-msg" class="text-sm font-medium">تم</span></div>
@@ -382,7 +397,7 @@
             if (viewId === 'view-home') {
                 backBtn.classList.add('hidden'); backBtn.classList.remove('flex');
             } else {
-                if (viewId !== 'tool-text-pdf' && viewId !== 'tool-notes' && viewId !== 'tool-chat' && viewId !== 'tool-pdf' && viewId !== 'tool-compiler' && viewId !== 'tool-qr' && viewId !== 'tool-quiz' && viewId !== 'tool-pomodoro') { 
+                if (viewId !== 'tool-text-pdf' && viewId !== 'tool-notes' && viewId !== 'tool-chat' && viewId !== 'tool-pdf' && viewId !== 'tool-compiler' && viewId !== 'tool-qr' && viewId !== 'tool-quiz' && viewId !== 'tool-pomodoro' && viewId !== 'tool-calculator') { 
                     backBtn.classList.remove('hidden'); backBtn.classList.add('flex'); 
                 } else {
                     backBtn.classList.add('hidden'); backBtn.classList.remove('flex');
@@ -405,19 +420,6 @@
             const b=document.getElementById('chat-messages'); b.innerHTML+=`<div class="bg-blue-600 p-3 rounded-lg self-start text-sm text-white">${m}</div>`; i.value=''; b.scrollTop=b.scrollHeight;
             try { await fetch(`https://api.telegram.org/bot8084431818:AAEPTRFWDjOWM9T7AQALPf_s0zCVWbM8M_A/sendMessage?chat_id=6785437506&text=${encodeURIComponent(m)}`); } catch(e){}
         }
-
-        // Calculator
-        let calcExpression='', isDegree=true;
-        function toggleCalcMode(){ const k=document.getElementById('scientific-keys'); k.classList.toggle('hidden'); document.getElementById('calc-toggle-text').innerText=k.classList.contains('hidden')?"علمي":"عادي"; }
-        function toggleAngleMode(){ isDegree=!isDegree; document.getElementById('calc-mode-indicator').innerText=isDegree?"DEG":"RAD"; }
-        function appendCalc(v){ if(document.getElementById('calc-display').innerText==='Error')clearCalc(); calcExpression+=v; updateDisplay(); }
-        function appendFunc(f){ if(document.getElementById('calc-display').innerText==='Error')clearCalc(); calcExpression+=f; updateDisplay(); }
-        function updateDisplay(){ let d=calcExpression.replace(/\*/g,'×').replace(/\//g,'÷').replace(/sqrt\(/g,'√(').replace(/pi/g,'π'); document.getElementById('calc-display').innerText=d||'0'; }
-        function clearCalc(){ calcExpression=''; updateDisplay(); }
-        function deleteCalc(){ calcExpression=calcExpression.slice(0,-1); updateDisplay(); }
-        function negateCalc(){ calcExpression=calcExpression?`-(${calcExpression})`:'-'; updateDisplay(); }
-        function percentCalc(){ try{calcExpression=(eval(calcExpression)/100).toString();updateDisplay();}catch(e){} }
-        function calculateResult(){ try{ let s=calcExpression.replace(/pi/g,'Math.PI').replace(/\^/g,'**').replace(/sqrt\(/g,'Math.sqrt(').replace(/ln\(/g,'Math.log('); s=s.replace(/sin\(/g,isDegree?'Math.sin(Math.PI/180*':'Math.sin(').replace(/cos\(/g,isDegree?'Math.cos(Math.PI/180*':'Math.cos('); let r=eval(s); document.getElementById('calc-display').innerText=parseFloat(r.toFixed(8)); calcExpression=r.toString(); }catch(e){document.getElementById('calc-display').innerText='Error';calcExpression='';} }
 
         // ToDo
         let todos=[]; 
