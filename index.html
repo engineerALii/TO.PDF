@@ -211,13 +211,13 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
             <!-- 1. PDF (IFRAME) -->
             <div onclick="showView('tool-pdf')" class="glass-card p-6 flex items-center gap-4"><div class="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400"><i data-lucide="images" class="w-6 h-6"></i></div><div><h3 class="font-bold text-white">صور إلى PDF</h3></div></div>
-            <!-- 2. Quiz (IFRAME - REPLACED) -->
+            <!-- 2. Quiz (IFRAME) -->
             <div onclick="showView('tool-quiz')" class="glass-card p-6 flex items-center gap-4"><div class="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400"><i data-lucide="brain-circuit" class="w-6 h-6"></i></div><div><h3 class="font-bold text-white">منشئ الاختبارات</h3></div></div>
             <!-- 3. Text Editor (IFRAME) -->
             <div onclick="showView('tool-text-pdf')" class="glass-card p-6 flex items-center gap-4"><div class="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-400"><i data-lucide="file-text" class="w-6 h-6"></i></div><div><h3 class="font-bold text-white">محرر المستندات</h3><p class="text-xs text-white/50">تحويل احترافي لـ PDF</p></div></div>
             <!-- 4. ToDo -->
             <div onclick="showView('tool-todo')" class="glass-card p-6 flex items-center gap-4"><div class="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center text-purple-400"><i data-lucide="list-todo" class="w-6 h-6"></i></div><div><h3 class="font-bold text-white">قائمة المهام</h3></div></div>
-            <!-- 5. Pomodoro (IFRAME - REPLACED) -->
+            <!-- 5. Pomodoro (IFRAME) -->
             <div onclick="showView('tool-pomodoro')" class="glass-card p-6 flex items-center gap-4"><div class="w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center text-red-400"><i data-lucide="timer" class="w-6 h-6"></i></div><div><h3 class="font-bold text-white">مؤقت التركيز</h3></div></div>
             <!-- 6. Calculator (IFRAME - REPLACED) -->
             <div onclick="showView('tool-calculator')" class="glass-card p-6 flex items-center gap-4"><div class="w-12 h-12 rounded-xl bg-cyan-500/20 flex items-center justify-center text-cyan-400"><i data-lucide="calculator" class="w-6 h-6"></i></div><div><h3 class="font-bold text-white">حاسبة علمية</h3></div></div>
@@ -324,19 +324,14 @@
         <iframe src="https://engineeralii.github.io/timer/" class="w-full flex-1 bg-white border-0" allow="clipboard-read; clipboard-write"></iframe>
     </div>
 
-    <!-- 7. Calculator (IFRAME - REPLACED) -->
+    <!-- 7. Calculator (IFRAME - REPLACED: Fullscreen + Floating Back) -->
     <div id="tool-calculator" class="view-section fixed inset-0 z-[150] bg-slate-900 flex-col">
-        <div class="bg-slate-800 border-b border-slate-700 shadow-lg z-20 px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center gap-2">
-                <button onclick="showView('view-home')" class="text-slate-400 hover:text-white transition-colors p-1">
-                    <i data-lucide="arrow-right" class="w-6 h-6"></i>
-                </button>
-                <h1 class="text-lg font-bold text-white">حاسبة علمية</h1>
-            </div>
-            <a href="https://engineeralii.github.io/cl/" target="_blank" class="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1">
-                <i data-lucide="external-link" class="w-4 h-4"></i> فتح في نافذة جديدة
-            </a>
-        </div>
+        <!-- Floating Back Button -->
+        <button onclick="showView('view-home')" class="absolute top-4 right-4 z-50 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full backdrop-blur-md border border-white/10 transition-all flex items-center justify-center shadow-lg">
+            <i data-lucide="arrow-right" class="w-6 h-6"></i>
+        </button>
+        
+        <!-- Iframe -->
         <iframe src="https://engineeralii.github.io/cl/" class="w-full flex-1 bg-white border-0" allow="clipboard-read; clipboard-write"></iframe>
     </div>
 
@@ -397,6 +392,8 @@
             if (viewId === 'view-home') {
                 backBtn.classList.add('hidden'); backBtn.classList.remove('flex');
             } else {
+                // Back button logic - Show on all tools except home
+                // Note: Iframe tools now have their own back buttons in header/floating
                 if (viewId !== 'tool-text-pdf' && viewId !== 'tool-notes' && viewId !== 'tool-chat' && viewId !== 'tool-pdf' && viewId !== 'tool-compiler' && viewId !== 'tool-qr' && viewId !== 'tool-quiz' && viewId !== 'tool-pomodoro' && viewId !== 'tool-calculator') { 
                     backBtn.classList.remove('hidden'); backBtn.classList.add('flex'); 
                 } else {
